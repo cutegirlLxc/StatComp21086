@@ -1,0 +1,448 @@
+## ----eval=FALSE---------------------------------------------------------------
+#  library(ggplot2)
+#  library(dplyr)
+#  diamonds %>%
+#    filter(y < 3 | y > 20) %>%
+#    select(price, x, y, z) %>%
+#    arrange(y)
+
+## ----eval=FALSE---------------------------------------------------------------
+#  library(dplyr)
+#  library(ggplot2)
+#  smaller <- diamonds %>%
+#    filter(carat < 3)
+#  
+#  # Select variables which satatisfy carat<3, and name them "smaller"
+#  
+#  
+#  ggplot(data = smaller, mapping = aes(x = carat, colour = cut)) +
+#    geom_freqpoly(binwidth = 0.1)
+#  
+#  # plot a frequency distribution graph? different colors denotes different cuts
+#  
+#  
+#  
+
+## ----eval=FALSE---------------------------------------------------------------
+#  library(VGAM)
+#  library(ggplot2)
+#  si<-4  # suppose sigma= 4.
+#  n<-1e5
+#  u<-runif(n)
+#  
+#  x<-sqrt(-2*si^2*log(u))
+#  
+#  r<-rrayleigh(n,scale=si)
+#  nu<-c(1:1e5)
+#  df1<-data.frame(nu,x)
+#  df2<-data.frame(nu,r)
+#  df<-merge(df1,df2,by="nu")
+#  # Generate a dataframe
+#  
+#  ggplot(df,aes(x=x))+geom_histogram(color="darkblue",fill="lightblue",binwidth = .5)
+#  
+
+## ----eval=FALSE---------------------------------------------------------------
+#  ggplot(df,aes(x=r))+geom_histogram(color="darkblue",fill="lightblue",binwidth = .5)
+
+## ----eval=FALSE---------------------------------------------------------------
+#  f<-function(n,p){
+#    u<-runif(n)
+#    X1<-rnorm(n,mean = 0,sd=1)
+#    X2<-rnorm(n,mean=3,sd=1)
+#    x<-(u<=p)*X1+(1-(u<=p))*X2
+#    dx<-data.frame(x=x)
+#    ggplot(dx,aes(x=x))+geom_histogram(bins = 30,color="darkblue",fill="lightblue",alpha=0.6)+geom_freqpoly(color="red")
+#  }
+#  
+#  # This function is convinent for changing paramaters,which means avoiding dupl?ca?ing wheels
+#  n<-1000
+#  p<-.7
+#  f(n,p)
+
+## ----eval=FALSE---------------------------------------------------------------
+#  # it's indeed appear like bimodal
+#  
+#  
+#  n<-10000
+#  # To make the conjecture more accurate, s?t n=10000
+#  f(n,.1)
+
+## ----eval=FALSE---------------------------------------------------------------
+#  #f(n,.2)
+#  #f(n,.3)
+#  #f(n,.8)
+#  #f(n,.9)
+#  # conjecture: from the 6 pictures below, I guess that p produce bimodal mixtures if 0.2<p<0.8 .
+#  
+
+## ----eval=FALSE---------------------------------------------------------------
+#  n<-1e5
+#  a<-1
+#  b<-1/2
+#  lambda<-1
+#  t<-10
+#  rp<-rpois(n,lambda=lambda*t)
+#  # suppose a,b are parameters Gamma(a,b),lambda is the parameter of Possion distributio?, Possion(lambda).
+#  
+#  rg_po<-rgamma(n,rp*a,b)
+#  mean(rg_po)
+#  sd(rg_po)^2
+
+## ----eval=FALSE---------------------------------------------------------------
+#  # It is very similar to theoretical variance 80.
+#  
+#  a<-2
+#  b<-4
+#  lambda<-2
+#  rp1<-rpois(n,lambda=lambda*t)
+#  rg_po1<-rgamma(n,rp1*a,b)
+#  mean(rg_po1)
+#  sd(rg_po)^2
+#  #Changing the parameters prov?s that the mean and variance is very similar to theoretical values.
+
+## ----eval=FALSE---------------------------------------------------------------
+#  set.seed(321)
+#  n<-1e5
+#  cdf<-function(x,alpha,beta){
+#    u<-runif(n,0,x)
+#    c<-factorial(alpha+beta-1)/(factorial((alpha-1))*factorial(beta-1))*mean(x*(u^2*(1-u)^2))
+#    c
+#  }
+#  
+#  # cdf(x,alpha,beta) is the function to simulate cdf of beta distribution with parameters,alpha and beta.
+#  
+#  
+#  x<-seq(.1,.9,.1)
+#  y<-numeric(9)
+#  for (i in x) {
+#    y[10*i]<-cdf(i,3,3)
+#  }
+#  
+#  cdf<-y
+#  pbeta<-pbeta(x,3,3)
+#  rbind(x,cdf,pbeta) # compare cdf computed by MC with theoretical values.
+
+## ----eval=FALSE---------------------------------------------------------------
+#  n<-1e5
+#  var_anti_red<-function(sigma){
+#    u<-runif(n)
+#    v<-1-u
+#    x<-sigma*sqrt(-2*log(u))
+#    # firstly, generate a sample from Rayleigh distribution by inverse transform
+#    y<-sigma*sqrt(-2*log(v))
+#    # antithetic variables
+#    v_a=(var(x)+var(y)+2*cov(x,y))/4
+#    # compute new variance using antithetic variables,i.e. Var((X+X')/2).
+#    z<-runif(n)
+#    x1<-sigma*sqrt(-2*log(z))
+#    v=var((x1+x)/2)
+#    # v is the variance of (X1+X2)/2
+#    p<-(v-v_a)/v
+#     cat("The percent reduction of variance is",p,"\n")
+#  }
+#  
+#  var_anti_red(6)
+#  var_anti_red(10)
+
+## ----eval=FALSE---------------------------------------------------------------
+#  n<-1e6
+#  u<-rexp(n,1)
+#  g <- function(x) {
+#      (x>=1)*(x^2 * exp(-x^2 / 2)) / sqrt(2 *pi)
+#  }
+#  f_1 <- function(x) {
+#    exp(-x)
+#    }
+#  
+#  gf1<-g(u)/f_1(u)
+#  
+#  v<-rnorm(n)
+#  gf2<-v^2*(v>=1)
+#  #for simplicity, gf2=g(v)/f(v).
+#  var(gf1)/var(gf2)<1
+#  cat("f1 produces smaller variance")
+
+## ----eval=FALSE---------------------------------------------------------------
+#  cbind(c(mean(gf1),var(gf1)),c(mean(gf2),var(gf2)))
+
+## ----eval=FALSE---------------------------------------------------------------
+#  set.seed(13)
+#  m<-5000
+#  n <- 20
+#  
+#  # x are a vector of random variables obeying Chi(2) with expected value 2.
+#  pcover<-mean(
+#    replicate(m, expr = {
+#  x <- rchisq(n, 2)
+#  ttest <- t.test(x,conf.level = .95)
+#  CI<-ttest$conf.int
+#  (2>CI[1])&(2<CI[2])} )
+#  )
+#  # Use the replicate function to repeat determing whether 2 is in the confidence interval
+#  # repeat the
+#  pcover
+#  # the probability that the confidence interval covers the mean is smaller than .95
+#  
+
+## ----eval=FALSE---------------------------------------------------------------
+#  n<-20
+#  x<-rchisq(n,2)
+#  UCL<-mean(x)+sd(x)*qt(.975,df=n-1)/sqrt(n)
+#  LCL<-mean(x)-sd(x)*qt(.975,df=n-1)/sqrt(n)
+#  cat("the t-interval is:[" ,LCL, UCL,"]",sep = " ")
+
+## ----eval=FALSE---------------------------------------------------------------
+#  set.seed(21)
+#  cover_chi<-function(m,n ){mean(
+#    replicate(m, expr = {
+#  x <- rchisq(n, 1)
+#  ttest <- t.test(x,conf.level = .95)
+#  CI<-ttest$conf.int
+#  (1>CI[1])&(1<CI[2])} )
+#  )}
+#  
+#  
+#  cover_uni<-function(m,n){mean(
+#    replicate(m, expr = {
+#  x <- runif(n, 0,2)
+#  ttest <- t.test(x,conf.level = .95)
+#  CI<-ttest$conf.int
+#  (1>CI[1])&(1<CI[2])} )
+#  )}
+#  
+#  cover_exp<-function(m,n){mean(
+#    replicate(m, expr = {
+#  x <- rexp(n)
+#  ttest <- t.test(x,conf.level = .95)
+#  CI<-ttest$conf.int
+#  (1>CI[1])&(1<CI[2])} )
+#  )}
+#  
+#  m<-1000
+#  n<-20
+#  # then the probability of type I error can be computed as :
+#  
+#  # p1<-c(1-cover_chi(m,n),1-cover_uni(m,n),1-cover_exp(m,n))
+#  # m<-5000
+#  # p2<-c(1-cover_chi(m,n),1-cover_uni(m,n),1-cover_exp(m,n))
+#  
+#  # m<-10000
+#  # p3<-c(1-cover_chi(m,n),1-cover_uni(m,n),1-cover_exp(m,n))
+#  # df<-data.frame(p1,p2,p3,row.names = c("chi(1)","U(0,2)","exp(1)"))
+#  # colnames(df)<-c("m=1000","m=5000","m=10000")
+#  # df
+
+## ----eval=FALSE---------------------------------------------------------------
+#  set.seed(543)
+#  m<-1000
+#  
+#  n<-20
+#  p_1<-c(1-cover_chi(m,n),1-cover_uni(m,n),1-cover_exp(m,n))
+#  n<-100
+#  p_2<-c(1-cover_chi(m,n),1-cover_uni(m,n),1-cover_exp(m,n))
+#  n<-5000
+#  p_3<-c(1-cover_chi(m,n),1-cover_uni(m,n),1-cover_exp(m,n))
+#  df<-data.frame(p_1,p_2,p_3,row.names = c("chi(1)","U(0,2)","exp(1)"))
+#  colnames(df)<-c("n=20","n=100","n=5000")
+#  df
+
+## ----eval=TRUE----------------------------------------------------------------
+set.seed(753)
+library(mvtnorm)
+
+
+n <- c(10,20,30,50,100,500) 
+cv<-qchisq(.95,10)
+#critical value for the skewness test
+
+eskew<-function(x){
+  m<-ncol(x) # number of colums
+  sig_inv<-solve(cov(x)) 
+  # cov(x) is the empirical covariance matrix, sig_inv is the inverse of cov(x)
+  normx<-0*x
+  for (i in 1:m) {
+    normx[,i]<-x[,i]-mean(x[,i])
+  }
+  
+  # there is a for loop to compute the x-mu, mu is the mean of x
+  k<-nrow(x)
+  esk<-sum(colSums((normx%*%sig_inv%*%t(normx))^3))/k^2
+  # compute mardia statistic
+  return(esk)
+}
+
+# Set the covariance matrix as below.
+cov_mat <- diag(c(1,1,1))
+
+#The function below is formed according to the multivariate skewness test.
+
+ m <- 1e3
+ p.reject<-numeric(6)
+
+
+ for (i in 1:6) {
+  v<-n[i]
+  skvector<-numeric(m)
+  for (l in 1:m) {
+  x<-rmvnorm(v,rep(0,3),cov_mat) 
+  # mean of x is (0,0,0)
+  
+  skvector[l]<-eskew(x)
+  skewt<-(v*skvector/6>=cv)
+  # if true reject null hypothesis.
+  }
+  p.reject[i]<-mean(skewt)
+}
+p.reject
+
+## ----eval=TRUE----------------------------------------------------------------
+library(mvtnorm)
+set.seed(5432)
+cv<-qchisq(.95,10)
+alpha <- .1
+n <- 60 
+q <- 1000
+ep <- c(seq(0, .15, .01), seq(.15, 1, .05))
+N <- 34
+pwr <- numeric(N)
+
+# for (i in 1:N) { #for each epsilon
+#  e<-ep[i]
+#  skt <- numeric(q)
+
+#  for (j in 1:q) { 
+#    x<-matrix(0,n,3)
+#    for(l in 1:n){
+#      s<-sample(c(1,10),size=1,prob = #c(1-e,e),replace = TRUE)
+#  # choose covariance matrix
+#  x[l,]<-rmvnorm(1, rep(0,3),diag(c(s,s,s))) 
+  
+#    }
+
+#  skt[j] <- ((n*eskew(x)/6)>=cv)
+#}
+#  pwr[i] <- mean(skt)
+#}
+#plot(ep, pwr, type = "b",
+#     xlab = bquote(epsilon), ylim = c(0,1))
+#abline(h = .05, lty = 3)
+#se <- sqrt(pwr * (1-pwr) / m) #add standard #errors
+#lines(ep, pwr+se, lty = 3)
+#lines(ep, pwr-se, lty = 3)
+
+## ----eval=TRUE----------------------------------------------------------------
+library(mvtnorm)
+library(bootstrap)
+sigma<-diag(c(1:5))
+# covariance matrix,whose eigenvalue are 1,2,3,4,5.
+set.seed(54)
+B<-1000  
+# number bootstrap taken
+
+data<-scor
+n<-nrow(data)
+emp_sigma<-cov(data) 
+# MLE of covariance matrix
+eigenvalue<-eigen(emp_sigma)$values
+
+
+bootstat<-replicate(B,expr = {
+  index<-sample(1:n,n,replace = TRUE) 
+  # resample from original sample.
+  bootdata<-data[index,]
+  bootcov<-cov(bootdata)
+  eigenvalue<-eigen(bootcov)$values
+  max(eigenvalue)/sum(eigenvalue)
+})
+
+se<-sd(bootstat)
+# The bootstrap estimatation of standard error.
+
+sample_eigen<-eigen(cov(data))$values
+# eigenvalues of sample's MLE covariance matrix
+theta.sample<-max(sample_eigen)/sum(sample_eigen)
+bias.hat<-mean(bootstat)-theta.sample
+# The bootstrap estimation of bias. 
+
+round(c(se.boot=se,bias.boot=bias.hat),digits = 4)
+
+## ----eval=TRUE----------------------------------------------------------------
+set.seed(223)
+theta<-numeric(n)
+for (i in 1:n) {
+  
+  data.jack<-data[-i,]
+  jackcov<-cov(data.jack)
+  eigen.jack<-eigen(jackcov)$values
+  theta[i]<-max(eigen.jack)/sum(eigen.jack)
+}
+
+bias.jack<-(n-1)*(mean(theta)-theta.sample)
+se.jack<-sqrt((n-1)*mean((theta-mean(theta))^2))
+round(c(bias.jack,se.jack),digits = 4)
+
+## ----eval=TRUE----------------------------------------------------------------
+library(boot)
+set.seed(233)
+theta_i<-function(data,i){
+  sigma<-cov(data[i,])
+  eigenvalues<-eigen(sigma)$values
+  max(eigenvalues)/sum(eigenvalues)
+}
+
+theta_boot<-boot(data=data,statistic = theta_i,R=B)
+# In order to use boot function, I change a boot method there, which is equivalent to methods used in problem 7.7, 7.8.
+
+CI.boot<-boot.ci( theta_boot, type=c("norm","basic","perc") )
+CI.boot
+
+## ----eval=TRUE----------------------------------------------------------------
+library(psych)
+library(boot)
+set.seed(489)
+n<-100
+B<-100
+
+
+skew.i <- function(data,i) {
+   m3 <- mean((data[i] - mean(data[i]))^3)
+   m2 <- mean((data[i] - mean(data[i]))^2)
+     return( m3 / m2^1.5 )
+}
+m<-1e3
+cp.nor.nor<-numeric(m)
+cp.per.nor<-numeric(m)
+cp.bas.nor<-numeric(m)
+# coverage probability of normal skewness estimated by normal, percentile and basic type respictively.
+
+
+for (i in 1:m) {
+  x<-rnorm(n,0,1)
+  skew_normal.boot<-boot(data=x,statistic = skew.i,R=B)
+  CI<-boot.ci(skew_normal.boot,type =c("norm","perc","basic") )
+  cp.nor.nor[i]<-(CI$normal[2]<0)&(CI$normal[3]>0)
+  cp.per.nor[i]<-(CI$percent[4]<0)&(CI$percent[5]>0)
+  cp.bas.nor[i]<-(CI$basic[4]<0)&(CI$basic[5]>0)
+}
+c(mean(cp.nor.nor),mean(cp.per.nor),mean(cp.bas.nor))
+
+
+
+## ----eval=TRUE----------------------------------------------------------------
+set.seed(556)
+cp.nor.chi<-numeric(m)
+cp.per.chi<-numeric(m)
+cp.bas.chi<-numeric(m)
+# coverage probability of chi-square skewness estimated by normal, percentile and basic type respictively.
+skew<-1.265
+for (i in 1:m) {
+  y<-rchisq(n,5)
+  skew_normal.boot<-boot(data=y,statistic = skew.i,R=B)
+  CI<-boot.ci(skew_normal.boot,type =c("norm","perc","basic") )
+  cp.nor.chi[i]<-(CI$normal[2]<skew)&(CI$normal[3]>skew)
+  cp.per.chi[i]<-(CI$percent[4]<skew)&(CI$percent[5]>skew)
+  cp.bas.chi[i]<-(CI$basic[4]<skew)&(CI$basic[5]>skew)
+}
+c(mean(cp.nor.chi),mean(cp.per.chi),mean(cp.bas.chi))
+

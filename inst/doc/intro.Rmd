@@ -1,0 +1,136 @@
+---
+title: "Introduction to StatComp21086"
+author: "Li Xiangchao"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to StatComp21086}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview
+
+__StatComp21086__  uses a new method to compute the rank CUSUM statistic, simply by calculating the depth of each sample point and then ranking them according to their values.
+
+Here is a description of the functions of this package and how to use them
+
+The simple principle of this package is as follows
+
+$$\hat{k}^{*}=\min \left\{k:\left|Z_{N}(\lfloor k / N\rfloor)\right|=\sup _{0 \leq t \leq 1}\left|Z_{N}(t)\right|\right\}$$
+$$ \hat{\theta}=\frac{\widehat{k}^{*}}{N}$$
+$\hat{\theta}$ is the estimated relative location of change point.
+
+
+## Compute depth of every point and rank them
+
+The source R code for _data_depth_ is as follows:
+```{r,eval=FALSE}
+library(depth)
+data_depth<-function(data,method){
+  if(method==1){
+    madist<-mahalanobis(data,colMeans(data),cov(data))
+    madist
+  }else{
+    N<-nrow(data)
+    nc<-ncol(data)
+    dep<-numeric(N)
+    meth=ifelse(nc<3,"Tukey","Oja")
+    dep_comp<-function(y){
+      depth::depth(y,data,method = meth)
+    }
+    apply(data, 1, dep_comp)
+  }
+}
+
+
+```
+
+This function contains two parameters, one for the data and one for the specified method,If method=1 is specified, then the depth is calculated using the mahalanobis function,otherwise use the oja function or tukey function.
+
+
+
+The source R code for _depth_rank_ is as follows:
+```{r,eval=FALSE}
+depth_rank<-function(data,method){
+  dep <- data_depth(data,method)
+  rank(dep,ties.method = "first")
+}
+
+```
+
+This function ranks the data according to each depth value
+
+
+## Compute rank-CUSUM statistic
+
+```{r,eval=FALSE}
+Z.t<-function(data,method,t){
+  N<-nrow(data)
+  Nt<-N*t
+  n<-floor(Nt)
+  mean<-(N+1)/2
+  sig<-sqrt((N^2-1)/12)
+  r<-depth_rank(data,method)
+  normalized_rank<-(r-mean)/sig
+  trank<-normalized_rank[1:n]
+  sum(trank)/sqrt(N)
+}
+
+```
+
+The Z.t function calculates the statistic at some t, t between 0 and 1
+
+
+```{r,eval=FALSE}
+Z_stat<-function(data,method){
+  N<-nrow(data)
+  mean<-(N+1)/2
+  sig<-sqrt((N^2-1)/12)
+  r<-depth_rank(data,method)
+  normalized_rank<-(r-mean)/sig
+  cumsum(normalized_rank)/sqrt(N)
+}
+
+```
+This function calculates the statistic at each sample point.
+
+## Detect the change point.
+
+```{r,eval=FALSE}
+chan_poi<-function(data,method){
+  Z<-Z_stat(data,method)
+  M<-max(abs(Z))
+  which(Z==M)
+}
+
+```
+
+## An example for the package is given :
+
+```{r,eval=FALSE}
+set.seed(258)
+library(StatComp21086)
+library(mvtnorm)
+mu1<-rep(1,20)
+sig1<-diag(10,20)
+sig2<-diag(c(9,8,7,rep(10,14),7,8,9))
+mu2<-seq(from=0.55,to=1.5,by=.05)
+x<-rmvnorm(100,mu1,sig2)
+y<-rmvnorm(100,mu2,sig2)
+data<-rbind(x,y)
+
+z<-Z_stat(data,1)
+plot(z,type="l",col='blue')
+chan_poi(data,1,2)
+```
+The mahalanobis function is recommended due to the advantage of the speed of the calculation,especially in the case of large dimensions.
+
+Under relatively mild conditons,the following equation holds:
+$$
+|\theta-\hat{\theta}|=o_{p}(1)
+$$

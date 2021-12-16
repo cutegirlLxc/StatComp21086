@@ -1,0 +1,20 @@
+Package: StatComp21086
+Type: Package
+Title: This package provides several functions for estimating the location of a change point
+Version: 1.0
+Date: 2021-12-14
+Author: Li Xiangchao
+Maintainer: Li Xiangchao <lxc1468401361@mail.ustc.edu.cn>
+Description: Several R and Rcpp function are included in this package to perform a change point detection.
+License: GPL (>= 2)
+Imports: Rcpp, microbenchmark, knitr, rmarkdown,depth,ggplot2,dplyr,VGAM,mvtnorm,bootstrap,boot,psych,RANN,energy,Ball,stableGR,stats4 
+LinkingTo: Rcpp
+RoxygenNote: 7.1.2
+Encoding: UTF-8
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr
+URL: http://github.com/cutegirlLxc/StatComp21086
+BugReports: http://github.com/cutegirlLxc/StatComp21086/issues
+
+
+
