@@ -1,6 +1,0 @@
-/doc/
-/Meta/
-.Rproj.user
-src/*.so
-src/*.o
-src/*.dll
